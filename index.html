@@ -45,7 +45,7 @@ const categories=["Subjekt","Prädikat","Akkusativobjekt","Dativobjekt","Tempora
 const wordCats=["Nomen","Verb","Adjektiv","Artikel","Pronomen"];
 function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
 function mastery(k){return state.skills[k]||{score:0,seen:0}}
-function pickWeighted(arr){let weights=arr.map(t=>Math.max(1,7-mastery(t.key).score)+(state.recent.includes(t.key)?-0.7:0));let sum=weights.reduce((a,b)=>a+b,0),r=Math.random()*sum;for(let i=0;i<arr.length;i++){r-=weights[i];if(r<=0)return arr[i]}return arr[0]}
+function pickWeighted(arr){let previous=state.recent||[];let last=previous[0];let alternatives=arr.filter(t=>t.key!==last);if(alternatives.length)arr=alternatives;let weights=arr.map(t=>{let weakness=Math.max(1,7-mastery(t.key).score);let repetition=previous.includes(t.key)?0.15:1;let sameExample=task&&t.datum===task.datum?0.1:1;return weakness*repetition*sameExample});let sum=weights.reduce((a,b)=>a+b,0),r=Math.random()*sum;for(let i=0;i<arr.length;i++){r-=weights[i];if(r<=0)return arr[i]}return arr[arr.length-1]}
 function buildPool(mode){if(mode==="mixed")return [...buildPool("parts"),...buildPool("words")];if(mode==="words")return words.map((w,i)=>({kind:"word",key:"wort:"+w.a,datum:w,idx:i}));
 let pool=[];cases.filter(c=>c.parts.every(p=>enabled.includes(p[1]))).forEach((c,i)=>{c.parts.forEach((p,j)=>pool.push({kind:"part",key:"satz:"+p[1],datum:c,idx:j}));if(c.parts.length>=3)pool.push({kind:"move",key:"umstellen",datum:c})});return pool}
 function start(mode){lastMode=mode;round=0;state.sessions++;save();$("home").classList.add("hidden");$("game").classList.remove("hidden");nextTask()}
