@@ -10,7 +10,7 @@
 <section id="game" class="hidden"><div class="row"><button class="btn" onclick="goHome()">← Übersicht</button><span class="pill" id="skillTag">Training</span></div><div class="card"><div class="row"><span class="eyebrow" id="taskType">AUFGABE</span><span class="pill" id="difficulty">Stufe 1</span></div><h2 id="question"></h2><p id="sentence" style="font-size:19px"></p><div id="interaction"></div><div id="feedback" role="status" aria-live="polite"></div><div id="hint" class="hint hidden"></div><div class="row" style="margin-top:16px"><button class="btn" id="hintButton" onclick="showHint()">💡 Hilfe</button><button class="btn primary hidden" id="nextButton" onclick="nextTask()">Weiter →</button></div></div><p class="muted mini">Du kannst jederzeit eine Pause machen. Dein Lernstand wird gespeichert.</p></section>
 </main><script>
 const $=id=>document.getElementById(id),KEY="grammatikquest-v2";
-let state={xp:0,solved:0,independent:0,sessions:0,skills:{},badges:[],recent:[],missionStreak:0,missionStage:0};
+let state={xp:0,solved:0,independent:0,sessions:0,skills:{},badges:[],recent:[],recentExamples:[],missionStreak:0,missionStage:0};
 try{const old=JSON.parse(localStorage.getItem(KEY));if(old&&typeof old==="object")state={...state,...old,skills:old.skills||{},badges:old.badges||[],recent:old.recent||[]}}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));$("saveLabel").textContent="● Fortschritt gespeichert"}catch(e){$("saveLabel").textContent="Speichern im Browser nicht möglich"}}
 let enabled=["Subjekt","Prädikat","Akkusativobjekt"],lastMode="parts",task=null,helpCount=0,attempts=0,finished=false,chosen=[],round=0;
@@ -27,7 +27,39 @@ const cases=[
 {s:"Der Hund schläft.",parts:[["Der Hund","Subjekt"],["schläft","Prädikat"]]},
 {s:"Am Morgen besucht die Klasse das Museum.",parts:[["Am Morgen","Temporaladverbiale"],["besucht","Prädikat"],["die Klasse","Subjekt"],["das Museum","Akkusativobjekt"]]},
 {s:"Die Lehrerin gibt dem Schüler ein Heft.",parts:[["Die Lehrerin","Subjekt"],["gibt","Prädikat"],["dem Schüler","Dativobjekt"],["ein Heft","Akkusativobjekt"]]},
-{s:"Im Garten spielt das Kind.",parts:[["Im Garten","Lokaladverbiale"],["spielt","Prädikat"],["das Kind","Subjekt"]]}
+{s:"Im Garten spielt das Kind.",parts:[["Im Garten","Lokaladverbiale"],["spielt","Prädikat"],["das Kind","Subjekt"]]},
+{"s":"Die Katze fängt eine Maus.","parts":[["Die Katze","Subjekt"],["fängt","Prädikat"],["eine Maus","Akkusativobjekt"]]},
+{"s":"Einen Brief schreibt der Schüler.","parts":[["Einen Brief","Akkusativobjekt"],["schreibt","Prädikat"],["der Schüler","Subjekt"]]},
+{"s":"Mein Bruder öffnet das Fenster.","parts":[["Mein Bruder","Subjekt"],["öffnet","Prädikat"],["das Fenster","Akkusativobjekt"]]},
+{"s":"Die Hausaufgaben kontrolliert die Lehrerin.","parts":[["Die Hausaufgaben","Akkusativobjekt"],["kontrolliert","Prädikat"],["die Lehrerin","Subjekt"]]},
+{"s":"Der Torwart hält den Ball.","parts":[["Der Torwart","Subjekt"],["hält","Prädikat"],["den Ball","Akkusativobjekt"]]},
+{"s":"Das Fahrrad putzt meine Freundin.","parts":[["Das Fahrrad","Akkusativobjekt"],["putzt","Prädikat"],["meine Freundin","Subjekt"]]},
+{"s":"Die Kinder bauen eine Sandburg.","parts":[["Die Kinder","Subjekt"],["bauen","Prädikat"],["eine Sandburg","Akkusativobjekt"]]},
+{"s":"Einen Film schaut die Familie.","parts":[["Einen Film","Akkusativobjekt"],["schaut","Prädikat"],["die Familie","Subjekt"]]},
+{"s":"Der Koch schneidet das Gemüse.","parts":[["Der Koch","Subjekt"],["schneidet","Prädikat"],["das Gemüse","Akkusativobjekt"]]},
+{"s":"Das Geschenk verpackt mein Vater.","parts":[["Das Geschenk","Akkusativobjekt"],["verpackt","Prädikat"],["mein Vater","Subjekt"]]},
+{"s":"Ein Mädchen füttert die Enten.","parts":[["Ein Mädchen","Subjekt"],["füttert","Prädikat"],["die Enten","Akkusativobjekt"]]},
+{"s":"Den Rucksack trägt der Junge.","parts":[["Den Rucksack","Akkusativobjekt"],["trägt","Prädikat"],["der Junge","Subjekt"]]},
+{"s":"Unsere Klasse plant einen Ausflug.","parts":[["Unsere Klasse","Subjekt"],["plant","Prädikat"],["einen Ausflug","Akkusativobjekt"]]},
+{"s":"Die Zeitung liest meine Oma.","parts":[["Die Zeitung","Akkusativobjekt"],["liest","Prädikat"],["meine Oma","Subjekt"]]},
+{"s":"Der Hund sucht seinen Knochen.","parts":[["Der Hund","Subjekt"],["sucht","Prädikat"],["seinen Knochen","Akkusativobjekt"]]},
+{"s":"Eine Geschichte erzählt der Großvater.","parts":[["Eine Geschichte","Akkusativobjekt"],["erzählt","Prädikat"],["der Großvater","Subjekt"]]},
+{"s":"Meine Freundin kauft ein Buch.","parts":[["Meine Freundin","Subjekt"],["kauft","Prädikat"],["ein Buch","Akkusativobjekt"]]},
+{"s":"Den Schlüssel findet der Hausmeister.","parts":[["Den Schlüssel","Akkusativobjekt"],["findet","Prädikat"],["der Hausmeister","Subjekt"]]},
+{"s":"Der Schüler löst die Aufgabe.","parts":[["Der Schüler","Subjekt"],["löst","Prädikat"],["die Aufgabe","Akkusativobjekt"]]},
+{"s":"Das Bild malt die Künstlerin.","parts":[["Das Bild","Akkusativobjekt"],["malt","Prädikat"],["die Künstlerin","Subjekt"]]},
+{"s":"Ein Vogel baut ein Nest.","parts":[["Ein Vogel","Subjekt"],["baut","Prädikat"],["ein Nest","Akkusativobjekt"]]},
+{"s":"Den Tisch deckt mein Bruder.","parts":[["Den Tisch","Akkusativobjekt"],["deckt","Prädikat"],["mein Bruder","Subjekt"]]},
+{"s":"Die Mannschaft gewinnt das Spiel.","parts":[["Die Mannschaft","Subjekt"],["gewinnt","Prädikat"],["das Spiel","Akkusativobjekt"]]},
+{"s":"Einen Kuchen backt meine Mutter.","parts":[["Einen Kuchen","Akkusativobjekt"],["backt","Prädikat"],["meine Mutter","Subjekt"]]},
+{"s":"Der Gärtner gießt die Blumen.","parts":[["Der Gärtner","Subjekt"],["gießt","Prädikat"],["die Blumen","Akkusativobjekt"]]},
+{"s":"Das Tor schießt die Stürmerin.","parts":[["Das Tor","Akkusativobjekt"],["schießt","Prädikat"],["die Stürmerin","Subjekt"]]},
+{"s":"Meine Schwester sucht ihr Handy.","parts":[["Meine Schwester","Subjekt"],["sucht","Prädikat"],["ihr Handy","Akkusativobjekt"]]},
+{"s":"Den Text liest der Lehrer.","parts":[["Den Text","Akkusativobjekt"],["liest","Prädikat"],["der Lehrer","Subjekt"]]},
+{"s":"Der Mechaniker repariert das Auto.","parts":[["Der Mechaniker","Subjekt"],["repariert","Prädikat"],["das Auto","Akkusativobjekt"]]},
+{"s":"Die Frage beantwortet der Schüler.","parts":[["Die Frage","Akkusativobjekt"],["beantwortet","Prädikat"],["der Schüler","Subjekt"]]},
+{"s":"Ein Junge wirft einen Stein.","parts":[["Ein Junge","Subjekt"],["wirft","Prädikat"],["einen Stein","Akkusativobjekt"]]},
+{"s":"Die Musik hört meine Freundin.","parts":[["Die Musik","Akkusativobjekt"],["hört","Prädikat"],["meine Freundin","Subjekt"]]}
 ];
 const words=[
 {s:"Der Hund bellt.",w:"Hund",a:"Nomen",why:"Hund bezeichnet ein Lebewesen."},
@@ -39,13 +71,43 @@ const words=[
 {s:"Ein Vogel singt.",w:"singt",a:"Verb",why:"singt beschreibt, was der Vogel tut."},
 {s:"Meine Freundin malt.",w:"Freundin",a:"Nomen",why:"Freundin bezeichnet eine Person."},
 {s:"Er fährt nach Hause.",w:"Er",a:"Pronomen",why:"Er ersetzt den Namen einer Person."},
-{s:"Das neue Fahrrad glänzt.",w:"neue",a:"Adjektiv",why:"neue beschreibt das Fahrrad."}
+{s:"Das neue Fahrrad glänzt.",w:"neue",a:"Adjektiv",why:"neue beschreibt das Fahrrad."},
+{"s":"Die Schule beginnt.","w":"Schule","a":"Nomen","why":"Das Wort benennt ein Lebewesen, einen Gegenstand oder etwas Gedachtes."},
+{"s":"Der Junge rennt.","w":"rennt","a":"Verb","why":"Das Wort bezeichnet eine Tätigkeit oder einen Vorgang."},
+{"s":"Eine alte Uhr tickt.","w":"alte","a":"Adjektiv","why":"Das Wort beschreibt eine Eigenschaft."},
+{"s":"Ein Hund wartet.","w":"Ein","a":"Artikel","why":"Das Wort begleitet ein Nomen."},
+{"s":"Sie spielt Fußball.","w":"Sie","a":"Pronomen","why":"Das Wort steht stellvertretend für ein Nomen oder eine Person."},
+{"s":"Die Blume wächst.","w":"Blume","a":"Nomen","why":"Das Wort benennt ein Lebewesen, einen Gegenstand oder etwas Gedachtes."},
+{"s":"Die Kinder lachen.","w":"lachen","a":"Verb","why":"Das Wort bezeichnet eine Tätigkeit oder einen Vorgang."},
+{"s":"Ein kalter Wind weht.","w":"kalter","a":"Adjektiv","why":"Das Wort beschreibt eine Eigenschaft."},
+{"s":"Das Fenster ist offen.","w":"Das","a":"Artikel","why":"Das Wort begleitet ein Nomen."},
+{"s":"Ich lese gern.","w":"Ich","a":"Pronomen","why":"Das Wort steht stellvertretend für ein Nomen oder eine Person."},
+{"s":"Der Zug kommt.","w":"Zug","a":"Nomen","why":"Das Wort benennt ein Lebewesen, einen Gegenstand oder etwas Gedachtes."},
+{"s":"Das Baby schläft.","w":"schläft","a":"Verb","why":"Das Wort bezeichnet eine Tätigkeit oder einen Vorgang."},
+{"s":"Ein spannender Film läuft.","w":"spannender","a":"Adjektiv","why":"Das Wort beschreibt eine Eigenschaft."},
+{"s":"Der Ball rollt.","w":"Der","a":"Artikel","why":"Das Wort begleitet ein Nomen."},
+{"s":"Du bist pünktlich.","w":"Du","a":"Pronomen","why":"Das Wort steht stellvertretend für ein Nomen oder eine Person."},
+{"s":"Meine Schwester zeichnet.","w":"Schwester","a":"Nomen","why":"Das Wort benennt ein Lebewesen, einen Gegenstand oder etwas Gedachtes."},
+{"s":"Die Sonne scheint.","w":"scheint","a":"Verb","why":"Das Wort bezeichnet eine Tätigkeit oder einen Vorgang."},
+{"s":"Ein großer Baum steht dort.","w":"großer","a":"Adjektiv","why":"Das Wort beschreibt eine Eigenschaft."},
+{"s":"Eine Katze miaut.","w":"Eine","a":"Artikel","why":"Das Wort begleitet ein Nomen."},
+{"s":"Wir gehen nach Hause.","w":"Wir","a":"Pronomen","why":"Das Wort steht stellvertretend für ein Nomen oder eine Person."},
+{"s":"Das Fahrrad steht draußen.","w":"Fahrrad","a":"Nomen","why":"Das Wort benennt ein Lebewesen, einen Gegenstand oder etwas Gedachtes."},
+{"s":"Der Lehrer erklärt.","w":"erklärt","a":"Verb","why":"Das Wort bezeichnet eine Tätigkeit oder einen Vorgang."},
+{"s":"Das frische Brot duftet.","w":"frische","a":"Adjektiv","why":"Das Wort beschreibt eine Eigenschaft."},
+{"s":"Die Tür knarrt.","w":"Die","a":"Artikel","why":"Das Wort begleitet ein Nomen."},
+{"s":"Er gewinnt heute.","w":"Er","a":"Pronomen","why":"Das Wort steht stellvertretend für ein Nomen oder eine Person."},
+{"s":"Ein Kind springt.","w":"Kind","a":"Nomen","why":"Das Wort benennt ein Lebewesen, einen Gegenstand oder etwas Gedachtes."},
+{"s":"Der Regen fällt.","w":"fällt","a":"Verb","why":"Das Wort bezeichnet eine Tätigkeit oder einen Vorgang."},
+{"s":"Die schwierige Aufgabe gelingt.","w":"schwierige","a":"Adjektiv","why":"Das Wort beschreibt eine Eigenschaft."},
+{"s":"Ein Vogel fliegt.","w":"Ein","a":"Artikel","why":"Das Wort begleitet ein Nomen."},
+{"s":"Ihr spielt draußen.","w":"Ihr","a":"Pronomen","why":"Das Wort steht stellvertretend für ein Nomen oder eine Person."}
 ];
 const categories=["Subjekt","Prädikat","Akkusativobjekt","Dativobjekt","Temporaladverbiale","Lokaladverbiale"];
 const wordCats=["Nomen","Verb","Adjektiv","Artikel","Pronomen"];
 function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
 function mastery(k){return state.skills[k]||{score:0,seen:0}}
-function pickWeighted(arr){let previous=state.recent||[];let last=previous[0];let alternatives=arr.filter(t=>t.key!==last);if(alternatives.length)arr=alternatives;let weights=arr.map(t=>{let weakness=Math.max(1,7-mastery(t.key).score);let repetition=previous.includes(t.key)?0.15:1;let sameExample=task&&t.datum===task.datum?0.1:1;return weakness*repetition*sameExample});let sum=weights.reduce((a,b)=>a+b,0),r=Math.random()*sum;for(let i=0;i<arr.length;i++){r-=weights[i];if(r<=0)return arr[i]}return arr[arr.length-1]}
+function pickWeighted(arr){let previous=state.recent||[];let recentExamples=state.recentExamples||[];let last=previous[0];let alternatives=arr.filter(t=>t.key!==last);if(alternatives.length)arr=alternatives;let weights=arr.map(t=>{let weakness=Math.max(1,7-mastery(t.key).score);let repetition=previous.includes(t.key)?0.15:1;let sameExample=recentExamples.includes(t.datum.s)?0.08:1;return weakness*repetition*sameExample});let sum=weights.reduce((a,b)=>a+b,0),r=Math.random()*sum;for(let i=0;i<arr.length;i++){r-=weights[i];if(r<=0)return arr[i]}return arr[arr.length-1]}
 function buildPool(mode){if(mode==="mixed")return [...buildPool("parts"),...buildPool("words")];if(mode==="words")return words.map((w,i)=>({kind:"word",key:"wort:"+w.a,datum:w,idx:i}));
 let pool=[];cases.filter(c=>c.parts.every(p=>enabled.includes(p[1]))).forEach((c,i)=>{c.parts.forEach((p,j)=>{pool.push({kind:"part",key:"satz:"+p[1],datum:c,idx:j});if(["Subjekt","Akkusativobjekt"].includes(p[1]))pool.push({kind:"probe",key:"frage:"+p[1],datum:c,idx:j})});if(c.parts.length>=3)pool.push({kind:"move",key:"umstellen",datum:c})});return pool}
 function start(mode){lastMode=mode;round=0;state.sessions++;save();$("home").classList.add("hidden");$("game").classList.remove("hidden");nextTask()}
@@ -75,7 +137,7 @@ function normalize(s){return s.toLowerCase().trim().replace(/[.!,]/g,"").replace
 function aliases(s){return ({Subjekt:["Subjekt","S"],Prädikat:["Prädikat","Praedikat","P"],Akkusativobjekt:["Akkusativobjekt","Akk Objekt","AO","Akkusativ Objekt"],Dativobjekt:["Dativobjekt","DO"],Nomen:["Nomen","Substantiv"],Verb:["Verb","Zeitwort"],Adjektiv:["Adjektiv","Eigenschaftswort"],Artikel:["Artikel","Begleiter"],Pronomen:["Pronomen","Fürwort"]})[s]||[s]}
 function showHint(){if(finished)return;helpCount=Math.min(3,helpCount+1);let h=[];if(task.kind==="word")h=["Überlege, welche Funktion das Wort im Satz hat.","Nomen benennen, Verben beschreiben Tätigkeiten, Adjektive Eigenschaften.","Hinweis: "+task.datum.why];else if(task.kind==="probe"){let n=task.datum.parts[task.idx][1];h=["Mit welcher Frage findest du das gesuchte Satzglied?","Subjekt: Wer oder was? Akkusativobjekt: Wen oder was?","Fragewort für diese Aufgabe: "+(n==="Subjekt"?"Wer oder was?":"Wen oder was?")]}else if(task.kind==="move")h=["Verschiebe nur vollständige Satzglieder.","Das gebeugte Verb steht im Aussagesatz an zweiter Stelle.","Beginne mit einem anderen Satzglied als im Ausgangssatz."];else{let a=task.datum.parts[task.idx][1];let q={Subjekt:"Wer oder was?",Prädikat:"Was tut jemand? / Was geschieht?",Akkusativobjekt:"Wen oder was?",Dativobjekt:"Wem?",Temporaladverbiale:"Wann?",Lokaladverbiale:"Wo?"};h=["Versuche, das Satzglied zu erfragen.","Die Frageprobe hilft dir, das Satzglied zu bestimmen.","Frage: "+(q[a]||"Welche Frage passt?")]}$("hint").classList.remove("hidden");$("hint").textContent="Hilfe "+helpCount+"/3: "+h[helpCount-1]}
 function success(msg){finish(true,"Richtig! "+msg)}
-function finish(correct,msg){if(finished)return;finished=true;let old=mastery(task.key);let independent=correct&&attempts===0&&helpCount===0;let score=Math.max(0,Math.min(9,old.score+(correct?(independent?2:1):-1)));state.skills[task.key]={score,seen:old.seen+1};state.recent=[task.key,...state.recent].slice(0,4);if(correct){state.solved++;if(independent)state.independent++;let points=independent?15:helpCount?5:8;state.xp+=points;msg+=" +"+points+" XP"}else{msg+=" Du kannst es gleich wieder versuchen."}
+function finish(correct,msg){if(finished)return;finished=true;let old=mastery(task.key);let independent=correct&&attempts===0&&helpCount===0;let score=Math.max(0,Math.min(9,old.score+(correct?(independent?2:1):-1)));state.skills[task.key]={score,seen:old.seen+1};state.recent=[task.key,...state.recent].slice(0,4);state.recentExamples=[task.datum.s,...(state.recentExamples||[])].slice(0,12);if(correct){state.solved++;if(independent)state.independent++;let points=independent?15:helpCount?5:8;state.xp+=points;msg+=" +"+points+" XP"}else{msg+=" Du kannst es gleich wieder versuchen."}
 if(independent){state.missionStreak=(state.missionStreak||0)+1;if(state.missionStreak>=8){state.missionStreak=0;state.missionStage=(state.missionStage||0)+1;state.xp+=30;msg+=" 🎉 Mission geschafft! +30 Bonus-XP";if(!state.badges.includes("Missionsprofi"))state.badges.push("Missionsprofi")}}else{state.missionStreak=0}
 if(state.solved>=1&&!state.badges.includes("Erster Erfolg"))state.badges.push("Erster Erfolg");if(state.independent>=10&&!state.badges.includes("Selbstständig"))state.badges.push("Selbstständig");if(state.solved>=30&&!state.badges.includes("Satzdetektiv"))state.badges.push("Satzdetektiv");save();$("feedback").className=correct?"success":"muted";$("feedback").textContent=msg;$("nextButton").classList.remove("hidden");$("hintButton").disabled=true;[...$("interaction").querySelectorAll("button,input")].forEach(x=>x.disabled=true)}
 function homeRender(){let level=Math.floor(state.xp/100)+1,progress=state.xp%100;$("levelLabel").textContent="Level "+level+" · "+(level<3?"Entdecker":level<6?"Satzdetektiv":"Grammatikprofi");$("xpTotal").textContent=state.xp+" XP";$("xpLabel").textContent=progress+" / 100 XP";$("xpRemaining").textContent=(100-progress)+" XP bis Level "+(level+1);$("xpFill").style.width=progress+"%";$("missionCount").textContent=(state.missionStreak||0)+" / 8";$("missionFill").style.width=((state.missionStreak||0)/8*100)+"%";$("statsLabel").textContent=state.solved+" Aufgaben gelöst";$("achievements").replaceChildren();if(!state.badges.length)$("achievements").textContent="Dein erstes Abzeichen wartet auf dich.";state.badges.forEach(x=>{let b=document.createElement("span");b.className="badge";b.textContent="🏅 "+x;$("achievements").append(b)})}
