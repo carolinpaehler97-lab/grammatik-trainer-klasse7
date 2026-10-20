@@ -2,6 +2,7 @@
   "freigeschaltet": [
     "Subjekt",
     "Prädikat",
-    "Akkusativobjekt"
+    "Akkusativobjekt",
+    "Dativobjekt"
   ]
 }
